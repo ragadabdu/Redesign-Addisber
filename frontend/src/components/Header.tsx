@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingBag, Search, Heart, User, ShoppingCart, Menu, X, Sparkles } from 'lucide-react';
+import { ShoppingBag, Search, Heart, User, ShoppingCart, Menu, X, Sparkles, LogIn, UserPlus } from 'lucide-react';
+import type { UserProfile } from '../types';
 
 interface HeaderProps {
   cartCount: number;
@@ -12,6 +13,8 @@ interface HeaderProps {
   onOpenWishlist: () => void;
   onOpenAccount: () => void;
   onOpenAIGuide: () => void;
+  currentUser?: UserProfile | null;
+  onOpenAuth: (tab: 'login' | 'register') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,6 +28,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenWishlist,
   onOpenAccount,
   onOpenAIGuide,
+  currentUser,
+  onOpenAuth,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -133,14 +138,52 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </button>
 
-          {/* Account */}
-          <button
-            onClick={onOpenAccount}
-            className="p-2.5 rounded-full hover:bg-[#f3f3fa] transition-colors text-[#424751] cursor-pointer"
-            title="Account"
-          >
-            <User className="w-5 h-5" />
-          </button>
+          {/* Account / Auth */}
+          {currentUser ? (
+            <button
+              onClick={onOpenAccount}
+              className="flex items-center gap-2 p-1.5 pl-2.5 rounded-full hover:bg-[#f3f3fa] border border-[#c3c6d2]/60 transition-colors text-[#424751] cursor-pointer"
+              title="Account Details"
+            >
+              <div className="w-7 h-7 rounded-full bg-[#1A4F95] text-white text-xs font-bold flex items-center justify-center">
+                {currentUser.fullName
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .substring(0, 2)
+                  .toUpperCase() || 'YA'}
+              </div>
+              <span className="hidden md:inline text-xs font-semibold text-[#003874] max-w-[100px] truncate">
+                {currentUser.fullName.split(' ')[0]}
+              </span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => onOpenAuth('login')}
+                className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold text-[#003874] hover:bg-[#f3f3fa] transition-colors cursor-pointer"
+                title="Sign In"
+              >
+                <LogIn className="w-3.5 h-3.5 text-[#1A4F95]" />
+                <span>Sign In</span>
+              </button>
+              <button
+                onClick={() => onOpenAuth('register')}
+                className="hidden sm:flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#FFD200] hover:bg-[#ecc200] text-[#0D1117] transition-all cursor-pointer shadow-2xs"
+                title="Create Account"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>Register</span>
+              </button>
+              <button
+                onClick={() => onOpenAuth('login')}
+                className="sm:hidden p-2.5 rounded-full hover:bg-[#f3f3fa] transition-colors text-[#424751] cursor-pointer"
+                title="Sign In / Register"
+              >
+                <User className="w-5 h-5" />
+              </button>
+            </div>
+          )}
 
           {/* Cart Button */}
           <button

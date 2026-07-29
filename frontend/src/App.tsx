@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PRODUCTS } from './data/products';
-import type { Product, CartItem } from './types';
+import type { Product, CartItem, UserProfile } from './types';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
 import { CategoryBento } from './components/CategoryBento';
@@ -17,8 +17,9 @@ import { CartDrawer } from './components/CartDrawer';
 import { WishlistDrawer } from './components/WishlistDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { AIShoppingGuide } from './components/AIShoppingGuide';
+import { AuthModal } from './components/AuthModal';
 import { Footer } from './components/Footer';
-import { Check, X, User, Package, MapPin, CreditCard, LogOut } from 'lucide-react';
+import { Check, X, User as UserIcon, Package, MapPin, CreditCard, LogOut, LogIn } from 'lucide-react';
 
 export default function App() {
   const [cart, setCart] = useState<CartItem[]>(() => {
@@ -39,17 +40,39 @@ export default function App() {
     }
   });
 
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() => {
+  try {
+    const saved = localStorage.getItem('addisber_user');
+    return saved ? JSON.parse(saved) : null;
+  } catch {
+    return null;
+  }
+});
+
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [discount, setDiscount] = useState(0);
+
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAIGuideOpen, setIsAIGuideOpen] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<'login' | 'register'>('login');
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Persist User
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('addisber_user', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('addisber_user');
+    }
+  }, [currentUser]);
 
   // Persist Cart
   useEffect(() => {
@@ -168,8 +191,20 @@ export default function App() {
         }}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenWishlist={() => setIsWishlistOpen(true)}
-        onOpenAccount={() => setIsAccountOpen(true)}
+        onOpenAccount={() => {
+          if (currentUser) {
+            setIsAccountOpen(true);
+          } else {
+            setAuthTab('login');
+            setIsAuthOpen(true);
+          }
+        }}
         onOpenAIGuide={() => setIsAIGuideOpen(true)}
+        currentUser={currentUser}
+        onOpenAuth={(tab) => {
+          setAuthTab(tab);
+          setIsAuthOpen(true);
+        }}
       />
 
       {/* Main Page Content */}
@@ -216,6 +251,8 @@ export default function App() {
             onToggleWishlist={handleToggleWishlist}
             onAddToCart={(p) => handleAddToCart(p, 1)}
             onQuickView={(p) => setQuickViewProduct(p)}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
           />
         </div>
 
@@ -254,7 +291,7 @@ export default function App() {
         onToggleWishlist={handleToggleWishlist}
         onAddToCart={handleAddToCart}
       />
-
+      
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
@@ -265,6 +302,8 @@ export default function App() {
           setIsCartOpen(false);
           setIsCheckoutOpen(true);
         }}
+        discount={discount}
+        onDiscountChange={setDiscount}
       />
 
       <WishlistDrawer
@@ -280,6 +319,7 @@ export default function App() {
         onClose={() => setIsCheckoutOpen(false)}
         cartItems={cart}
         onClearCart={() => setCart([])}
+        discount={discount}
       />
 
       <AIShoppingGuide
@@ -288,54 +328,78 @@ export default function App() {
         onSelectProduct={(p) => setQuickViewProduct(p)}
       />
 
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        initialTab={authTab}
+        onLoginSuccess={(user) => {
+          setCurrentUser(user);
+          showToast(`Welcome back, ${user.fullName.split(' ')[0]}!`);
+        }}
+        onRegisterSuccess={(user) => {
+          setCurrentUser(user);
+          showToast(`Account created! Welcome to Addis Ber, ${user.fullName.split(' ')[0]}!`);
+        }}
+      />
+
       {/* Account Modal */}
-      {isAccountOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+      {isAccountOpen && currentUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-[#c3c6d2] relative p-6 space-y-5">
             <div className="flex justify-between items-center border-b border-[#e2e2e8] pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-[#1A4F95] text-white font-bold text-lg flex items-center justify-center">
-                  YA
+                <div className="w-12 h-12 rounded-full bg-[#1A4F95] text-white font-bold text-lg flex items-center justify-center shadow-xs">
+                  {currentUser.fullName
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase() || 'YA'}
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-[#003874]">Yonas Alemu</h3>
-                  <p className="text-xs text-[#737782]">yonas.alemu@example.com</p>
+                  <h3 className="font-bold text-base text-[#003874]">{currentUser.fullName}</h3>
+                  <p className="text-xs text-[#737782]">{currentUser.email}</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsAccountOpen(false)}
-                className="p-1.5 rounded-full hover:bg-gray-100 text-[#424751]"
+                className="p-1.5 rounded-full hover:bg-gray-100 text-[#424751] cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-3 text-xs text-[#424751]">
-              <div className="p-3 rounded-xl bg-[#f3f3fa] flex items-center gap-3">
-                <Package className="w-5 h-5 text-[#1A4F95]" />
+              <div className="p-3 rounded-xl bg-[#f3f3fa] flex items-center gap-3 border border-[#e2e2e8]">
+                <Package className="w-5 h-5 text-[#1A4F95] shrink-0" />
                 <div>
                   <span className="font-bold text-[#003874] block">Active Orders</span>
                   <span>1 Order Dispatched (AB-98124)</span>
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-[#f3f3fa] flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-[#1A4F95]" />
+              <div className="p-3 rounded-xl bg-[#f3f3fa] flex items-center gap-3 border border-[#e2e2e8]">
+                <MapPin className="w-5 h-5 text-[#1A4F95] shrink-0" />
                 <div>
                   <span className="font-bold text-[#003874] block">Default Shipping</span>
-                  <span>Bole Subcity, House #402, Addis Ababa</span>
+                  <span>
+                    {currentUser.subcity ? `${currentUser.subcity} Subcity, ` : ''}
+                    {currentUser.city || 'Addis Ababa'}
+                  </span>
                 </div>
               </div>
-              <div className="p-3 rounded-xl bg-[#f3f3fa] flex items-center gap-3">
-                <CreditCard className="w-5 h-5 text-[#1A4F95]" />
+              <div className="p-3 rounded-xl bg-[#f3f3fa] flex items-center gap-3 border border-[#e2e2e8]">
+                <CreditCard className="w-5 h-5 text-[#1A4F95] shrink-0" />
                 <div>
-                  <span className="font-bold text-[#003874] block">Payment Methods</span>
-                  <span>Telebirr (0911****67) Linked</span>
+                  <span className="font-bold text-[#003874] block">Linked Phone & Payment</span>
+                  <span>Telebirr ({currentUser.phone || '0911****67'})</span>
                 </div>
               </div>
             </div>
 
             <button
               onClick={() => {
+                setCurrentUser(null);
                 setIsAccountOpen(false);
                 showToast('Signed out of Addis Ber account');
               }}

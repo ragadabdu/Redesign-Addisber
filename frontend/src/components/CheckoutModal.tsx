@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import type { CartItem, Order } from '../types';
-import { X, CheckCircle, Smartphone, CreditCard, Banknote, ShieldCheck, Truck, PackageCheck } from 'lucide-react';
+import { X, CheckCircle, Smartphone, CreditCard, ShieldCheck, Truck, PackageCheck } from 'lucide-react';
 import { VISA_LOGO, MASTERCARD_LOGO } from '../data/products';
 
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   cartItems: CartItem[];
+  discount: number;
   onClearCart: () => void;
 }
 
@@ -14,6 +15,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   isOpen,
   onClose,
   cartItems,
+  discount,
   onClearCart,
 }) => {
   const [step, setStep] = useState<'details' | 'success'>('details');
@@ -28,8 +30,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   if (!isOpen) return null;
 
   const subtotal = cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+  const discountAmount = (subtotal * discount) / 100;
+  const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   const deliveryFee = subtotal >= 5000 ? 0 : 250;
-  const total = subtotal + deliveryFee;
+  const total = discountedSubtotal + deliveryFee;
 
   const handleCompleteOrder = (e: React.FormEvent) => {
     e.preventDefault();
@@ -241,6 +245,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <span>Items ({cartItems.reduce((a, b) => a + b.quantity, 0)})</span>
                   <span className="font-semibold text-[#1a1c20]">ETB {subtotal.toLocaleString()}</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-semibold">
+                    <span>Discount ({discount}%)</span>
+                    <span>- ETB {discountAmount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-[#424751]">
                   <span>Delivery ({city}, {subcity})</span>
                   <span className="font-semibold text-emerald-700">

@@ -43,3 +43,10 @@ export interface Order {
   paymentMethod: string;
   status: 'Processing' | 'Dispatched' | 'Delivered';
 }
+export interface UserProfile {
+  fullName: string;
+  email: string;
+  phone: string;
+  city?: string;
+  subcity?: string;
+}

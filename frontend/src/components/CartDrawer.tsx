@@ -8,6 +8,8 @@ interface CartDrawerProps {
   cartItems: CartItem[];
   onUpdateQuantity: (productId: string, delta: number) => void;
   onRemoveItem: (productId: string) => void;
+  discount: number;
+  onDiscountChange: (discount: number) => void;
   onProceedToCheckout: () => void;
 }
 
@@ -17,10 +19,11 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   cartItems,
   onUpdateQuantity,
   onRemoveItem,
+  discount,
+  onDiscountChange,
   onProceedToCheckout,
 }) => {
   const [promoCode, setPromoCode] = useState('');
-  const [discount, setDiscount] = useState(0);
   const [promoMessage, setPromoMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -36,9 +39,10 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const handleApplyPromo = (e: React.FormEvent) => {
     e.preventDefault();
     if (promoCode.trim().toUpperCase() === 'ADDIS10' || promoCode.trim().toUpperCase() === 'WELCOME') {
-      setDiscount(10);
+      onDiscountChange(10);
       setPromoMessage('Promo code applied! 10% discount added.');
     } else {
+      onDiscountChange(0);
       setPromoMessage('Invalid code. Try "ADDIS10" for 10% off!');
     }
   };

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import type { Product } from '../types';
 import { ProductCard } from './ProductCard';
-import { TrendingUp, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
+import { TrendingUp, SlidersHorizontal } from 'lucide-react';
 
 interface TrendingSectionProps {
   products: Product[];
+  selectedCategory: string;
+  onSelectCategory: (category: string) => void;
   wishlistIds: string[];
   onToggleWishlist: (product: Product) => void;
   onAddToCart: (product: Product) => void;
@@ -13,19 +15,20 @@ interface TrendingSectionProps {
 
 export const TrendingSection: React.FC<TrendingSectionProps> = ({
   products,
+  selectedCategory,
+  onSelectCategory,
   wishlistIds,
   onToggleWishlist,
   onAddToCart,
   onQuickView,
 }) => {
-  const [activeTab, setActiveTab] = useState<string>('All');
   const [sortOption, setSortOption] = useState<string>('featured');
 
   const categories = ['All', 'Electronics', 'Fashion', 'Home & Kitchen', 'Groceries', 'Beauty & Personal Care'];
 
-  let filteredProducts = activeTab === 'All'
+  let filteredProducts = selectedCategory === 'All'
     ? products
-    : products.filter(p => p.category === activeTab);
+    : products.filter(p => p.category === selectedCategory);
 
   if (sortOption === 'price-low') {
     filteredProducts = [...filteredProducts].sort((a, b) => a.price - b.price);
@@ -74,9 +77,9 @@ export const TrendingSection: React.FC<TrendingSectionProps> = ({
           {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => setActiveTab(cat)}
+              onClick={() => onSelectCategory(cat)}
               className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                activeTab === cat
+                selectedCategory === cat
                   ? 'bg-[#1A4F95] text-white shadow-sm'
                   : 'bg-white text-[#424751] hover:bg-gray-100 border border-[#c3c6d2]/60'
               }`}
@@ -104,7 +107,7 @@ export const TrendingSection: React.FC<TrendingSectionProps> = ({
           <div className="text-center py-12 bg-white rounded-xl border border-dashed border-[#c3c6d2]">
             <p className="text-base text-[#737782]">No products found in this category.</p>
             <button
-              onClick={() => setActiveTab('All')}
+              onClick={() => onSelectCategory('All')}
               className="mt-3 text-sm text-[#1A4F95] font-bold underline"
             >
               View all products

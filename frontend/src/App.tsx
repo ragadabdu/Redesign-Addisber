@@ -50,6 +50,7 @@ export default function App() {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [cartDiscount, setCartDiscount] = useState(0);
 
   // Persist Cart
   useEffect(() => {
@@ -113,16 +114,14 @@ export default function App() {
     });
   };
 
-  // Filter products based on search query and category
+  // Filter products based on search query. Category filtering is handled by TrendingSection.
   const filteredProducts = PRODUCTS.filter((product) => {
-    const matchesCategory =
-      selectedCategory === 'All' || product.category === selectedCategory;
     const matchesQuery =
       !searchQuery ||
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesQuery;
+    return matchesQuery;
   });
 
   const wishlistedProducts = PRODUCTS.filter((p) => wishlist.includes(p.id));
@@ -212,6 +211,8 @@ export default function App() {
         <div id="trending-section">
           <TrendingSection
             products={filteredProducts}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
             wishlistIds={wishlist}
             onToggleWishlist={handleToggleWishlist}
             onAddToCart={(p) => handleAddToCart(p, 1)}
@@ -261,6 +262,8 @@ export default function App() {
         cartItems={cart}
         onUpdateQuantity={handleUpdateCartQuantity}
         onRemoveItem={handleRemoveCartItem}
+        discount={cartDiscount}
+        onDiscountChange={setCartDiscount}
         onProceedToCheckout={() => {
           setIsCartOpen(false);
           setIsCheckoutOpen(true);
@@ -279,7 +282,11 @@ export default function App() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         cartItems={cart}
-        onClearCart={() => setCart([])}
+        discount={cartDiscount}
+        onClearCart={() => {
+          setCart([]);
+          setCartDiscount(0);
+        }}
       />
 
       <AIShoppingGuide
